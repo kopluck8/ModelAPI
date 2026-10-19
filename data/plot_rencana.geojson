@@ -1,0 +1,15 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "Plot_ID": "RP-01", "Strata": "Rumput pendek", "Tim": "Tim A" },
+      "geometry": { "type": "Point", "coordinates": [117.9902, -8.2401] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "Plot_ID": "RT-01", "Strata": "Rumput tinggi", "Tim": "Tim B" },
+      "geometry": { "type": "Point", "coordinates": [117.9871, -8.2455] }
+    }
+  ]
+}

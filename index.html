@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Work Page FlamMap Tambora</title>
+  <meta name="description" content="Progres pengambilan data fuel model FlamMap di savana Taman Nasional Tambora">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Work Page FlamMap Tambora</h1>
+      <p class="sub">Pemodelan arah rambatan api di savana TN Tambora, tersambung ke spreadsheet tim</p>
+    </div>
+    <div class="top-stats" id="topStats" aria-live="polite"></div>
+    <button class="btn ghost" id="btnRefresh" type="button" title="Muat ulang data">Muat ulang</button>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" class="tab active" data-tab="workpage" aria-selected="true">Work Page</button>
+    <button role="tab" class="tab" data-tab="peta" aria-selected="false">Peta &amp; Input Plot</button>
+    <button role="tab" class="tab" data-tab="tugas" aria-selected="false">Progres Tugas</button>
+    <button role="tab" class="tab" data-tab="rekap" aria-selected="false">Rekap &amp; Fuel Model</button>
+  </nav>
+
+  <div id="banner" class="banner" hidden></div>
+
+  <main>
+    <section id="tab-workpage" class="tabpane active">
+      <div class="wp-layout">
+        <aside class="wp-toc" aria-label="Daftar isi">
+          <p class="toc-title">Daftar isi dan progres</p>
+          <ol id="toc"></ol>
+        </aside>
+        <article id="workpage" class="wp-article"><p class="sub">Memuat work page...</p></article>
+      </div>
+    </section>
+
+    <section id="tab-peta" class="tabpane">
+      <div class="map-wrap">
+        <div class="map-tools">
+          <input id="cariPlot" type="search" placeholder="Cari Plot_ID" aria-label="Cari Plot_ID">
+          <select id="filterStrata" aria-label="Filter strata"><option value="">Semua strata</option></select>
+          <button class="btn" id="btnTambah" type="button">+ Titik baru</button>
+          <button class="btn ghost" id="btnLokasi" type="button">Lokasi saya</button>
+        </div>
+        <div id="map" aria-label="Peta titik plot"></div>
+        <div id="modeTambah" class="mode-hint" hidden>Klik peta untuk menaruh titik plot baru. <button class="link" id="batalTambah" type="button">Batal</button></div>
+      </div>
+    </section>
+
+    <section id="tab-tugas" class="tabpane">
+      <div class="pane-inner">
+        <div id="ringkasanTahap" class="tahap-grid"></div>
+        <div class="table-tools">
+          <h2>Daftar tugas</h2>
+          <select id="filterStatus" aria-label="Filter status">
+            <option value="">Semua status</option>
+            <option>Belum</option><option>Proses</option><option>Terkendala</option><option>Selesai</option>
+            <option value="__telat">Terlambat</option>
+          </select>
+        </div>
+        <div class="table-scroll"><table id="tabelTugas" class="data"></table></div>
+        <p class="note">Status tugas diubah langsung di Google Sheets (sheet Tugas).</p>
+      </div>
+    </section>
+
+    <section id="tab-rekap" class="tabpane">
+      <div class="pane-inner">
+        <h2>Rekap per strata</h2>
+        <div id="rekapStrata" class="strata-grid"></div>
+        <h2>Fuel model kustom</h2>
+        <div class="table-scroll"><table id="tabelFuel" class="data"></table></div>
+        <div class="export-row">
+          <button class="btn" id="unduhFmd" type="button">Unduh tambora.fmd</button>
+          <button class="btn" id="unduhFms" type="button">Unduh tambora.fms</button>
+        </div>
+        <pre id="pratinjauFile" class="code"></pre>
+      </div>
+    </section>
+  </main>
+
+  <!-- Panel formulir plot -->
+  <aside id="panel" class="panel" hidden aria-labelledby="panelJudul">
+    <div class="panel-head">
+      <div>
+        <h2 id="panelJudul">Plot</h2>
+        <p id="panelStatus" class="sub"></p>
+      </div>
+      <button class="btn ghost" id="tutupPanel" type="button" aria-label="Tutup">Tutup</button>
+    </div>
+    <form id="formPlot" class="panel-body" autocomplete="off" novalidate>
+      <fieldset>
+        <legend>Data plot</legend>
+        <div class="grid2" id="fieldsPlot"></div>
+        <button class="btn ghost small" id="pakaiGps" type="button">Isi koordinat dari GPS HP</button>
+      </fieldset>
+
+      <fieldset>
+        <legend>Sub-plot panen (gram)</legend>
+        <p class="hint">Satu baris per fraksi per sub-plot. Berat kering boleh diisi belakangan setelah dioven.</p>
+        <div class="table-scroll"><table class="rows" id="rowsSubplot"></table></div>
+        <div class="row-actions">
+          <button class="btn ghost small" type="button" data-add="subplot">+ Baris</button>
+          <button class="btn ghost small" type="button" id="templateSubplot">Buat baris untuk semua sub-plot</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Transek ranting (jumlah potongan)</legend>
+        <div class="table-scroll"><table class="rows" id="rowsTransek"></table></div>
+        <div class="row-actions"><button class="btn ghost small" type="button" data-add="transek">+ Transek</button></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Kedalaman bahan bakar (cm, 10 titik)</legend>
+        <div class="depth-grid" id="fieldsKedalaman"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Helai rumput untuk SAV (mm)</legend>
+        <div class="table-scroll"><table class="rows" id="rowsSav"></table></div>
+        <div class="row-actions"><button class="btn ghost small" type="button" data-add="sav">+ Spesies</button></div>
+      </fieldset>
+
+      <fieldset class="calc">
+        <legend>Hasil hitung (pratinjau)</legend>
+        <div id="hasilHitung"></div>
+        <p class="hint">Angka resmi dihitung di spreadsheet dengan parameter di sheet Parameter.</p>
+      </fieldset>
+    </form>
+    <div class="panel-foot">
+      <span id="pesanSimpan" class="sub" aria-live="polite"></span>
+      <button class="btn primary" id="btnSimpan" type="button">Simpan ke spreadsheet</button>
+    </div>
+  </aside>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+  <script src="assets/config.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
